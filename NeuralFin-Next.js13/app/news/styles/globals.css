@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Eudoxus Sans", sans-serif;
+}
+
+.page-container {
+  background-color: white;
+  height: 100vh;
+  display: flex;
+}
+
+.right-half {
+  background: linear-gradient(180deg, rgb(3, 33, 26) 0%, rgb(12, 13, 13) 100%);
+  width: 50%;
+  height: 100%;
+}
+
+.left-half {
+  background-color: white;
+  width: 50%;
+  height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  box-sizing: border-box;
+}

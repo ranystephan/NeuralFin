@@ -1,0 +1,5 @@
+# Ignore Django admin files
+/admin.py
+/migrations/
+/__pycache__/
+/settings.py
