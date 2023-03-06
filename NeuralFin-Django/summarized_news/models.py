@@ -4,6 +4,7 @@ from django.db import models
 
 
 class SummarizedArticle(models.Model):
+    ticker = models.CharField(max_length=5)
     title = models.CharField(max_length=200)
     summary = models.TextField()
     url = models.URLField()
