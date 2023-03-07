@@ -1,16 +1,10 @@
 import re  # regular expressions
-import csv
 from transformers import pipeline
-from transformers import PegasusTokenizer, PegasusForConditionalGeneration, TFPegasusForConditionalGeneration
+from transformers import PegasusTokenizer, PegasusForConditionalGeneration
 from bs4 import BeautifulSoup
 import requests
 
-model_name = "human-centered-summarization/financial-summarization-pegasus"
-tokenizer = PegasusTokenizer.from_pretrained(
-    model_name)  # what incodes and decodes our text
-model = PegasusForConditionalGeneration.from_pretrained(
-    model_name, resume_download=True)  # model itsef
-    
+
 def search_for_stock_news_urls(ticker):
     """  
     Specs:
@@ -55,10 +49,12 @@ def scrape_and_process(URLs):
     Returns: list of articles
     Description: This function takes a list of urls and returns a list of articles
     """
-
     ARTICLES = []
     for url in URLs:
-        r = requests.get(url)
+        try:
+            r = requests.get(url, timeout=(10, 10))
+        except:
+            continue
         soup = BeautifulSoup(r.text, 'html.parser')
         paragraphs = soup.find_all('p')
         text = [paragraph.text for paragraph in paragraphs]
@@ -76,6 +72,12 @@ def summarize(articles):
     Returns: list of summaries
     Description: This function takes a list of articles and returns a list of summaries
     """
+
+    model_name = "human-centered-summarization/financial-summarization-pegasus"
+    tokenizer = PegasusTokenizer.from_pretrained(model_name)
+    model = PegasusForConditionalGeneration.from_pretrained(
+        model_name, resume_download=True)
+
     summaries = []
     for article in articles:
         input_ids = tokenizer.encode(article, return_tensors='pt')
@@ -118,9 +120,8 @@ def summarization_results(ticker_list):
     Description: This function takes a list of tickers and returns the results of the summarization pipeline
     """
 
-
     raw_urls = {ticker: search_for_stock_news_urls(
-        ticker) for ticker in ticker_list} # dictionary of lists
+        ticker) for ticker in ticker_list}  # dictionary of lists
 
     excluded_list = ['maps', 'policies', 'preferences', 'accounts', 'support']
 
