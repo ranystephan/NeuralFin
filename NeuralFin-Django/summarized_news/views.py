@@ -27,13 +27,16 @@ def summarize_news(request):
     # ticker = request.GET.get('ticker')
 
     ###
-    ticker = ['AAPL']
+    #testing with a sample ticker list
+    ticker_list = ['AAPL']
     ###
 
+    """ 
     if ticker:
         ticker_list = [ticker]
     else:
-        ticker_list = request.GET.getlist('tickers[]', [])
+        ticker_list = request.GET.getlist('tickers[]', []) 
+    """
 
     if not ticker_list:
         return JsonResponse({'error': 'Please provide at least one ticker.'}, status=400)
@@ -42,7 +45,7 @@ def summarize_news(request):
 
     ###
     context = {'results': results}
-    return render(request, 'summarized_news.html', context)
+    #return render(request, 'summarized_news.html', context)
     ###
 
-    # return JsonResponse({'results': results})
+    return JsonResponse({'results': results})
