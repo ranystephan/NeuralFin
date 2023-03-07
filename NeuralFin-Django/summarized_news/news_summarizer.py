@@ -5,7 +5,12 @@ from transformers import PegasusTokenizer, PegasusForConditionalGeneration, TFPe
 from bs4 import BeautifulSoup
 import requests
 
-
+model_name = "human-centered-summarization/financial-summarization-pegasus"
+tokenizer = PegasusTokenizer.from_pretrained(
+    model_name)  # what incodes and decodes our text
+model = PegasusForConditionalGeneration.from_pretrained(
+    model_name, resume_download=True)  # model itsef
+    
 def search_for_stock_news_urls(ticker):
     """  
     Specs:
@@ -104,15 +109,18 @@ def create_output_array(ticker_list, summaries, scores, urls):
 
 
 def summarization_results(ticker_list):
+    """
+    Specs:
+    Requires: list of tickers
+    Modifies: None
+    Returns: list of lists
+    Testing strategy: check that the length of the output is equal to the length of the ticker list, check that the first element of the output is a list of strings
+    Description: This function takes a list of tickers and returns the results of the summarization pipeline
+    """
 
-    model_name = "human-centered-summarization/financial-summarization-pegasus"
-    tokenizer = PegasusTokenizer.from_pretrained(
-        model_name)  # what incodes and decodes our text
-    model = PegasusForConditionalGeneration.from_pretrained(
-        model_name, resume_download=True)  # model itsef
 
     raw_urls = {ticker: search_for_stock_news_urls(
-        ticker) for ticker in ticker_list}
+        ticker) for ticker in ticker_list} # dictionary of lists
 
     excluded_list = ['maps', 'policies', 'preferences', 'accounts', 'support']
 
