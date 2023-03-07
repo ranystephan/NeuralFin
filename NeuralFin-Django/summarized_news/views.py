@@ -24,6 +24,14 @@ from .news_summarizer import summarization_results
 @csrf_exempt
 @require_GET
 def summarize_news(request):
+    """
+    Specs:
+    Description: Returns a list of summarized news articles for the given ticker(s) to the client (to be dispalyed in the frontend).
+    URL: /summarized_news/
+    Uses: news_summarizer.summarization_results()
+    """
+    
+    
     # ticker = request.GET.get('ticker')
 
     ###
