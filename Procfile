@@ -1,0 +1,1 @@
+web: gunicorn NeuralFin_Django.wsgi --log file -
