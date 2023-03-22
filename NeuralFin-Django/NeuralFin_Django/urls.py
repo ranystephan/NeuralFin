@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
 from api import views
-from stocks.views import get_stock_data
+from stocks.views import get_data_stock
 
 
 router = routers.DefaultRouter()
@@ -32,5 +32,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('api/stocks/<str:symbol>/', get_stock_data, name='get_stock_data'),
+    path('api/stocks/<str:symbol>/', get_data_stock, name='get_data_stock'),
 ]
