@@ -1,15 +1,23 @@
 import yfinance as yf
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from datetime import datetime
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import Stock
+from .serializers import StockSerializer
 
-@api_view(['GET'])
-def get_data_stock(request, symbol):
-    # Retrieve historical stock price data
-    stock = yf.Ticker(symbol)
-    data = stock.history(period="max")
-    # Convert the data to a dictionary
-    data_dict = data.reset_index().rename(columns={'index': 'Date'}).to_dict('list')
-    # Convert Timestamp values to string format
-    data_dict['Date'] = [date.strftime('%Y-%m-%d') for date in data_dict['Date']]
-    # Return the data as JSON
-    return JsonResponse(data_dict)
+
+def get_data_stock(symbol):
+    ticker = yf.Ticker(symbol)
+    data = ticker.history(period="1y")
+    data = data.reset_index()
+    data['date'] = data['Date'].apply(lambda x: datetime.strftime(x, '%Y-%m-%d'))
+    data.drop(['Date'], axis=1, inplace=True)
+    return data.to_dict('records')
+
+from django.http import JsonResponse
+
+class StockAPIView(APIView):
+    def get(self, request, symbol):
+        stock_data = get_data_stock(symbol.upper())
+        return JsonResponse({'stock_data': stock_data})
