@@ -16,13 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
-from api import views
 from stocks.views import StockAPIView
 
 
 router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
-router.register(r'groups', views.GroupViewSet)
 
 
 # Wire up our API using automatic URL routing.
@@ -30,7 +27,10 @@ router.register(r'groups', views.GroupViewSet)
 urlpatterns = [
     path('summarized-news/', include('summarized_news.urls')),
     path('admin/', admin.site.urls),
+    path('api/', include('users.urls')),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/stocks/<str:symbol>/', StockAPIView.as_view()),
+    
+
 ]
