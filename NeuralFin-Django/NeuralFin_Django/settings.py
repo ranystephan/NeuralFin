@@ -44,7 +44,6 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'stocks.apps.StocksConfig',
     'summarized_news.apps.SummarizedNewsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -54,7 +53,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'users'
+    'stocks',
+    'chartsData',
+    'users',
+    'options',
 ]
 
 MIDDLEWARE = [

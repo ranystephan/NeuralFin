@@ -1,19 +1,19 @@
-import yfinance as yf
-from datetime import datetime
-from django.shortcuts import get_object_or_404
+import pandas as pd
+from finvizfinance.quote import finvizfinance as ff
+
+
+
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import Stock
-from .serializers import StockSerializer
 
 
 def get_data_stock(symbol):
-    ticker = yf.Ticker(symbol)
-    data = ticker.history(period="1y")
-    data = data.reset_index()
-    data['date'] = data['Date'].apply(lambda x: datetime.strftime(x, '%Y-%m-%d'))
-    data.drop(['Date'], axis=1, inplace=True)
-    return data.to_dict('records')
+    stock = ff(symbol)
+    stock_data = {}
+    
+    stock_data['fundamental'] = stock.ticker_fundament()
+    
+
+    return stock_data
 
 from django.http import JsonResponse
 
