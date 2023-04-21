@@ -16,6 +16,7 @@ from django.core.cache import cache
 from transformers import PegasusForConditionalGeneration, PegasusTokenizer
 
 
+
 from pathlib import Path
 import os
 import environ
@@ -128,7 +129,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    
+
 }
 
 # Internationalization
@@ -159,10 +162,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = 'users.User' 
-CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://neuralfin.xyz",
 ]
-    
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
