@@ -28,6 +28,7 @@ class LoginView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password')
         
+        
         payload = {
             'id': user.id,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
@@ -38,7 +39,7 @@ class LoginView(APIView):
         
         response = Response()
 
-        response.set_cookie(key='jwt', value=token, httponly=True, samesite='None', secure=True)
+        response.set_cookie(key='jwt', value=token, httponly=True)
 
         response.data = {
             'jwt': token
@@ -56,7 +57,7 @@ class UserView(APIView):
             raise AuthenticationFailed('Unauthenticated')
         
         try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            payload = jwt.decode(token, 'secret', algorithm=['HS256'])
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated')
         
