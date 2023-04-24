@@ -38,7 +38,7 @@ class LoginView(APIView):
 
         response = Response()
 
-        response.set_cookie(key='jwt', value=token, httponly=True, samesite='None', secure=True, domain='neuralfin.xyz' )
+        response.set_cookie(key='jwt', value=token, httponly=True, samesite='None', secure=True )
         response.data = {
             'jwt': token
         }
@@ -66,7 +66,7 @@ class UserView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
-        response.delete_cookie('jwt', samesite='None', domain='neuralfin.xyz')
+        response.delete_cookie('jwt', samesite='None')
         response.data = {
             'message': 'success'
         }
