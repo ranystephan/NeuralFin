@@ -66,7 +66,7 @@ class UserView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
-        response.delete_cookie('jwt', path='/', httponly=True , samesite='None', secure=True)
+        response.delete_cookie('jwt', path='/', samesite='None')
         response.data = {
             'message': 'success'
         }
