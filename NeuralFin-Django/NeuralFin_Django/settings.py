@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'chartsData',
     'users',
     'options',
+    'stock_portfolio',
 ]
 
 MIDDLEWARE = [

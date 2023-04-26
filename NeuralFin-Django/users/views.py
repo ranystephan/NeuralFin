@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from .serializers import UserSerializer
 from .models import User
+
+from stock_portfolio.models import Portfolio
+
 import jwt, datetime
 
 
@@ -11,7 +14,10 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user = serializer.save()
+        portfolio = Portfolio.objects.create(user=user)
+        user.portfolio = portfolio
+        user.save()
         return Response(serializer.data)
 
 
