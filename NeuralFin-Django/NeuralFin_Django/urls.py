@@ -34,7 +34,6 @@ urlpatterns = [
     path('api/charts/<str:symbol>/', ChartAPIView.as_view()),
     path('api/stocks/<str:symbol>/', StockAPIView.as_view()),
     path('api/options/', include('options.urls')),
-    path('stock-portfolio/', include('stock_portfolio.urls')),
     
 
 ]
