@@ -30,10 +30,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('users.urls')),
     path('', include(router.urls)),
+    path('api/portfolio/', include('portfolio.urls')),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/charts/<str:symbol>/', ChartAPIView.as_view()),
     path('api/stocks/<str:symbol>/', StockAPIView.as_view()),
     path('api/options/', include('options.urls')),
-    
+
+
 
 ]

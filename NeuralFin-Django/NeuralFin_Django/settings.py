@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'chartsData',
     'users',
     'options',
+    'portfolio',
 ]
 
 MIDDLEWARE = [
@@ -166,6 +167,13 @@ CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
 
 SESSION_COOKIE_DOMAIN = 'neuralfin.xyz'
 CSRF_COOKIE_DOMAIN = 'neuralfin.xyz'
+
+
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = 'None'
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 
 CORS_ALLOWED_ORIGINS = [
