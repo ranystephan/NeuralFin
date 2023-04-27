@@ -1,22 +1,12 @@
 from rest_framework import serializers
-from .models import Stock, Portfolio, PortfolioStock
+from .models import Stock, Transaction
 
 class StockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stock
         fields = '__all__'
 
-class PortfolioStockSerializer(serializers.ModelSerializer):
-    stock = StockSerializer()
-
+class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PortfolioStock
-        fields = ('stock', 'shares')
-
-class PortfolioSerializer(serializers.ModelSerializer):
-    stocks = PortfolioStockSerializer(many=True, read_only=True)
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    class Meta:
-        model = Portfolio
-        fields = ('id', 'name', 'user', 'stocks')
+        model = Transaction
+        fields = '__all__'

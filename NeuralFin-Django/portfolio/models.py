@@ -1,17 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.conf import settings
+from users.models import User
 
 class Stock(models.Model):
     symbol = models.CharField(max_length=10, unique=True)
-    company_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
 
-class Portfolio(models.Model):
-    name = models.CharField(max_length=100)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    stocks = models.ManyToManyField(Stock, through='PortfolioStock')
-
-class PortfolioStock(models.Model):
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
+class Transaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
-    shares = models.PositiveIntegerField()
+    shares = models.IntegerField()
+    transaction_type = models.CharField(max_length=10, choices=[('buy', 'buy'), ('sell', 'sell')])
+    created_at = models.DateTimeField(auto_now_add=True)
