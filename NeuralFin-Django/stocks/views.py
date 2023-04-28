@@ -1,23 +1,24 @@
-import pandas as pd
-from finvizfinance.quote import finvizfinance as ff
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .models import Stock
+from .serializers import StockSerializer
 
 
 
-from rest_framework.views import APIView
-
-
-def get_data_stock(symbol):
-    stock = ff(symbol)
-    stock_data = {}
+class StockListCreateView(generics.ListCreateAPIView):
+    queryset = Stock.objects.all()
+    serializer_class = StockSerializer
+    permission_classes = [IsAuthenticated]
     
-    stock_data['fundamental'] = stock.ticker_fundament()
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
     
+    
+class StockRetrieveDestroyView(generics.RetrieveDestroyAPIView):
+    queryset = Stock.objects.all()
+    serializer_class = StockSerializer
+    permission_classes = [IsAuthenticated]
 
-    return stock_data
-
-from django.http import JsonResponse
-
-class StockAPIView(APIView):
-    def get(self, request, symbol):
-        stock_data = get_data_stock(symbol.upper())
-        return JsonResponse({'stock_data': stock_data})
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)

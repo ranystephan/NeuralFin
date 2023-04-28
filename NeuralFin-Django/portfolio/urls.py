@@ -1,8 +1,7 @@
 from django.urls import path
-from .views import StockListCreateView, TransactionListCreateView, StockInfoView
+from .views import PortfolioView
+
 
 urlpatterns = [
-    path('stocks/', StockListCreateView.as_view()),
-    path('transactions/', TransactionListCreateView.as_view()),
-    path('stock_info/<str:symbol>/', StockInfoView.as_view()),
+    path('portfolio/', PortfolioView.as_view(), name='portfolio'),
 ]

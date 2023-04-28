@@ -1,34 +1,56 @@
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from .models import Stock, Transaction
-from .serializers import StockSerializer, TransactionSerializer
-
-class StockListCreateView(generics.ListCreateAPIView):
-    queryset = Stock.objects.all()
-    serializer_class = StockSerializer
-    permission_classes = [IsAuthenticated]
-
-class TransactionListCreateView(generics.ListCreateAPIView):
-    serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Transaction.objects.filter(user=user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-import yfinance as yf
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from .models import Portfolio
+from .serializers import PortfolioSerializer
+from users.models import User
+from stocks.models import Stock
+from stocks.serializers import StockSerializer
+from stocks.utils import calculate_portfolio_value_and_pnl
 
-class StockInfoView(APIView):
-    def get(self, request, symbol):
-        try:
-            stock_info = yf.Ticker(symbol).info
-            return Response(stock_info)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class PortfolioView(APIView):
+    def get(self, request):
+        user = request.user
+        portfolio = Portfolio.objects.filter(user=user).first()
+        serializer = PortfolioSerializer(portfolio)
+        
+        portfolio_stocks = portfolio.stocks.all()
+        total_value, total_pnl = calculate_portfolio_value_and_pnl(portfolio_stocks)
+        response_data = {
+            "portfolio": serializer.data,
+            "total_value": total_value,
+            "total_pnl": total_pnl
+        }
+        return Response(response_data)
+
+        
+        
+    def post(self, request):
+        user = request.user
+        serializer = PortfolioSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        user = request.user
+        portfolio = Portfolio.objects.filter(user=user).first()
+        if not portfolio:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        stock_symbol = request.data.get('stock_symbol')
+        action = request.data.get('action')
+        if action == 'add':
+            stock, _ = Stock.objects.get_or_create(symbol=stock_symbol)
+            portfolio.stocks.add(stock)
+        elif action == 'remove':
+            stock = Stock.objects.filter(symbol=stock_symbol).first()
+            if stock:
+                portfolio.stocks.remove(stock)
+            else:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        serializer = PortfolioSerializer(portfolio)
+        return Response(serializer.data)
