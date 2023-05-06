@@ -2,4 +2,5 @@
 /admin.py
 /migrations/
 /__pycache__/
+/venv/
 /.env
