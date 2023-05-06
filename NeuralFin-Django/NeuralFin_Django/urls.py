@@ -31,8 +31,8 @@ urlpatterns = [
     path('', include(router.urls)),
     
     
-    path('api/portfolio/', include('portfolio.urls')),
     path('api/stock/', include('stocks.urls')),
+    path('api/portfolio/', include('portfolio.urls')),
     
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/charts/<str:symbol>/', ChartAPIView.as_view()),

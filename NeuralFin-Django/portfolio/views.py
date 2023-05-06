@@ -1,56 +1,127 @@
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .models import Portfolio, PortfolioItem
+from .serializers import PortfolioSerializer, PortfolioItemSerializer
+
+class PortfolioListCreateView(generics.ListCreateAPIView):
+    queryset = Portfolio.objects.all()
+    serializer_class = PortfolioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class PortfolioRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Portfolio.objects.all()
+    serializer_class = PortfolioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+class PortfolioItemListCreateView(generics.ListCreateAPIView):
+    serializer_class = PortfolioItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return PortfolioItem.objects.filter(portfolio__user=user)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+class PortfolioItemRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PortfolioItem.objects.all()
+    serializer_class = PortfolioItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(portfolio__user=self.request.user)
+
+
+
+
+import yfinance as yf
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .models import Portfolio
-from .serializers import PortfolioSerializer
-from users.models import User
-from stocks.models import Stock
-from stocks.serializers import StockSerializer
-from stocks.utils import calculate_portfolio_value_and_pnl
 
+class PortfolioMetricsView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class PortfolioView(APIView):
     def get(self, request):
         user = request.user
-        portfolio = Portfolio.objects.filter(user=user).first()
-        serializer = PortfolioSerializer(portfolio)
-        
-        portfolio_stocks = portfolio.stocks.all()
-        total_value, total_pnl = calculate_portfolio_value_and_pnl(portfolio_stocks)
-        response_data = {
-            "portfolio": serializer.data,
-            "total_value": total_value,
-            "total_pnl": total_pnl
+        portfolio_items = PortfolioItem.objects.filter(portfolio__user=user)
+        start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+
+        # Fetch historical stock data
+        stock_data = {}
+        for item in portfolio_items:
+            stock = item.stock
+            stock_info = yf.download(stock.symbol, start=start_date, end=end_date)
+            stock_data[stock.symbol] = stock_info
+
+        # Calculate metrics
+        portfolio_value = self.calculate_portfolio_value(portfolio_items, stock_data)
+
+        metrics = {
+            "portfolio_value": portfolio_value,
+            "portfolio_value_at_purchase": self.calculate_portfolio_value_at_purchase(portfolio_items),
+            "pnl": self.calculate_pnl(portfolio_items, stock_data),
+            "beta": self.calculate_beta(portfolio_items, stock_data, start_date, end_date),
+            # Add other metrics here
         }
-        return Response(response_data)
 
-        
-        
-    def post(self, request):
-        user = request.user
-        serializer = PortfolioSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(metrics)
 
-    def put(self, request):
-        user = request.user
-        portfolio = Portfolio.objects.filter(user=user).first()
-        if not portfolio:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        stock_symbol = request.data.get('stock_symbol')
-        action = request.data.get('action')
-        if action == 'add':
-            stock, _ = Stock.objects.get_or_create(symbol=stock_symbol)
-            portfolio.stocks.add(stock)
-        elif action == 'remove':
-            stock = Stock.objects.filter(symbol=stock_symbol).first()
-            if stock:
-                portfolio.stocks.remove(stock)
-            else:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        serializer = PortfolioSerializer(portfolio)
-        return Response(serializer.data)
+    def calculate_pnl(self, portfolio_items, stock_data):
+        pnl = 0
+        for item in portfolio_items:
+            stock = item.stock
+            current_price = stock_data[stock.symbol]["Close"].iloc[-1]
+            profit = (current_price - float(item.purchase_price)) * item.shares
+            pnl += profit
+        return pnl
+
+    def calculate_beta(self, portfolio_items, stock_data, start_date, end_date):
+        market_index_symbol = "^GSPC"  # S&P 500
+        market_index_data = yf.download(market_index_symbol, start=start_date, end=end_date)
+        market_returns = market_index_data["Close"].pct_change().dropna()
+
+        portfolio_beta = 0
+        for item in portfolio_items:
+            stock = item.stock
+            stock_returns = stock_data[stock.symbol]["Close"].pct_change().dropna()
+            covariance = stock_returns.cov(market_returns)
+            market_variance = market_returns.var()
+            beta = covariance / market_variance
+
+            # Calculate the weight of the stock in the portfolio
+            stock_weight = (item.shares * float(item.purchase_price)) / self.calculate_portfolio_value(portfolio_items, stock_data)
+
+            # Calculate the weighted beta
+            weighted_beta = stock_weight * beta
+            portfolio_beta += weighted_beta
+
+        return portfolio_beta
+
+    def calculate_portfolio_value(self, portfolio_items, stock_data):
+        portfolio_value = 0
+        for item in portfolio_items:
+            stock = item.stock
+            current_price = stock_data[stock.symbol]["Close"].iloc[-1]
+            value = current_price * item.shares
+            portfolio_value += value
+        return portfolio_value
+
+    def calculate_portfolio_value_at_purchase(self, portfolio_items):
+        portfolio_value_at_purchase = 0
+        for item in portfolio_items:
+            value_at_purchase = item.shares * float(item.purchase_price)
+            portfolio_value_at_purchase += value_at_purchase
+        return portfolio_value_at_purchase

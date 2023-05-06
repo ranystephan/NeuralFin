@@ -1,14 +1,14 @@
 from django.db import models
-from users.models import User
 
 
 
 class Stock(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    symbol = models.CharField(max_length=10)
-    shares = models.PositiveIntegerField()
-    purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
-    purchase_date = models.DateField()
-    
+    symbol = models.CharField(max_length=10, unique=True)  # Added unique=True
+    name = models.CharField(max_length=100)  # Add the name field
+    index = models.CharField(max_length=50, default='N/A')  # Add the exchange field
+    sector = models.CharField(max_length=50, null=True, blank=True)  # Add the sector field (optional)
+    industry = models.CharField(max_length=50, null=True, blank=True)  # Add the industry field (optional)
+    country = models.CharField(max_length=10, default='USA')  # Add the currency field
+
     def __str__(self):
-        return f"{self.symbol} - {self.shares} shares"
+        return f"{self.symbol} - {self.name}"
