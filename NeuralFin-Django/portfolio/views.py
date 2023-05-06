@@ -125,3 +125,57 @@ class PortfolioMetricsView(APIView):
             value_at_purchase = item.shares * float(item.purchase_price)
             portfolio_value_at_purchase += value_at_purchase
         return portfolio_value_at_purchase
+
+
+
+from django.utils import timezone
+
+
+class PortfolioValueOverTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        portfolio_items = PortfolioItem.objects.filter(portfolio__user=user)
+
+        # Determine the date of the first transaction and set the start_date 7 days earlier
+        first_transaction_date = portfolio_items.order_by("transaction_date").first().transaction_date.date()
+        start_date = (first_transaction_date - timedelta(days=7)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+
+        # Fetch historical stock data with an hourly interval
+        stock_data = {}
+        for item in portfolio_items:
+            stock = item.stock
+            stock_info = yf.download(stock.symbol, start=start_date, end=end_date, interval="1d")
+            stock_info = stock_info.fillna(method='ffill')  # Fill missing values with the most recent available price
+            stock_data[stock.symbol] = stock_info
+
+        # Calculate the portfolio value over time
+        portfolio_value_over_time = self.calculate_portfolio_value_over_time(portfolio_items, stock_data, start_date, end_date)
+
+        return Response(portfolio_value_over_time)
+
+    def calculate_portfolio_value_over_time(self, portfolio_items, stock_data, start_date, end_date):
+        date_range = pd.date_range(start=start_date, end=end_date, freq="D")
+        portfolio_value_over_time = {}
+
+        for date in date_range:
+            date = timezone.make_aware(date)
+            portfolio_value = 0
+            for item in portfolio_items:
+                if item.transaction_date <= date:
+                    stock = item.stock
+                    stock_info = stock_data[stock.symbol]
+                    if not stock_info.empty:
+                        current_price = stock_info.loc[stock_info.index <= date, "Close"].iloc[-1]
+                        value = current_price * item.shares
+                        portfolio_value += value
+
+            portfolio_value_over_time[date.strftime("%Y-%m-%d %H:%M:%S")] = portfolio_value
+
+        return portfolio_value_over_time
+
+
+
+

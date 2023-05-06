@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (PortfolioListCreateView, PortfolioRetrieveUpdateDestroyView,
-                    PortfolioItemListCreateView, PortfolioItemRetrieveUpdateDestroyView, PortfolioMetricsView)
+                    PortfolioItemListCreateView, PortfolioItemRetrieveUpdateDestroyView, PortfolioMetricsView, PortfolioValueOverTimeView)
 
 urlpatterns = [
     path('portfolios/', PortfolioListCreateView.as_view(), name='portfolio-list-create'),
@@ -8,4 +8,6 @@ urlpatterns = [
     path('portfolio-items/', PortfolioItemListCreateView.as_view(), name='portfolio-item-list-create'),
     path('portfolio-items/<int:pk>/', PortfolioItemRetrieveUpdateDestroyView.as_view(), name='portfolio-item-retrieve-update-destroy'),
     path('portfolio-metrics/', PortfolioMetricsView.as_view(), name='portfolio-metrics'),
+    path('portfolio-value-over-time/', PortfolioValueOverTimeView.as_view(), name='portfolio-value-over-time'),
+
 ]

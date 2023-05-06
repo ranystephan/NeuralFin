@@ -14,4 +14,4 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = PortfolioItem
-        fields = ['id', 'portfolio', 'stock', 'stock_symbol', 'shares', 'purchase_price', 'transaction_type']
+        fields = ['id', 'portfolio', 'stock', 'stock_symbol', 'shares', 'purchase_price', 'transaction_type', 'transaction_date']
