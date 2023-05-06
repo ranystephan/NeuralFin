@@ -3,6 +3,7 @@ from users.models import User
 from stocks.models import Stock
 from django.utils import timezone
 
+import yfinance as yf
 
 class Portfolio(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -26,7 +27,7 @@ class PortfolioItem(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
     stock_symbol = models.CharField(max_length=10)
     shares = models.PositiveIntegerField()
-    purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
+    purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=None)
     transaction_date = models.DateTimeField(default=timezone.now)
 
 
@@ -36,8 +37,15 @@ class PortfolioItem(models.Model):
         default=TransactionType.BUY,
     )
 
+    def get_stock_market_price(stock_symbol):
+        stock = yf.Ticker(stock_symbol)
+        market_price = stock.fast_info['lastPrice']
+        return market_price
+
     def save(self, *args, **kwargs):
         self.stock_symbol = self.stock.symbol
+        if self.purchase_price is None:
+            self.purchase_price = self.get_stock_market_price(self.stock.symbol)
         super().save(*args, **kwargs)
         
     def __str__(self):
