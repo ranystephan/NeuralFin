@@ -74,7 +74,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'NeuralFin_Django.csrf_exempt_middleware.CsrfExemptAdminMiddleware',
 ]
 
 
@@ -232,7 +231,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://neuralfin.xyz",
     "http://localhost:8000",
 ]
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",

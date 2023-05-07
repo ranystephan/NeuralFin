@@ -1,7 +1,13 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken
 from .models import Portfolio, PortfolioItem
 from .serializers import PortfolioSerializer, PortfolioItemSerializer
+
+
+
 
 class PortfolioListCreateView(generics.ListCreateAPIView):
     queryset = Portfolio.objects.all()
@@ -15,6 +21,8 @@ class PortfolioRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Portfolio.objects.all()
     serializer_class = PortfolioSerializer
     permission_classes = [IsAuthenticated]
+
+    
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
@@ -35,6 +43,7 @@ class PortfolioItemRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     serializer_class = PortfolioItemSerializer
     permission_classes = [IsAuthenticated]
 
+
     def get_queryset(self):
         return self.queryset.filter(portfolio__user=self.request.user)
 
@@ -50,11 +59,23 @@ from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+
+
 class PortfolioMetricsView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        token = request.COOKIES.get('jwt')
+        
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
+        
+        try:
+            jwt_authentication = JWTAuthentication()
+            validated_token = jwt_authentication.get_validated_token(token)
+            user = jwt_authentication.get_user(validated_token)
+        except InvalidToken:
+            raise AuthenticationFailed('Unauthenticated!')
+        
         portfolio_items = PortfolioItem.objects.filter(portfolio__user=user)
         start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
         end_date = datetime.now().strftime("%Y-%m-%d")
