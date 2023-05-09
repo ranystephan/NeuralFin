@@ -8,15 +8,18 @@ stockYF = yf.Ticker('AAPL')
 
 market_price = stockYF.fast_info['lastPrice']
 
+fast = stockYF.fast_info['previousClose']
+print(fast)
+
 #print(market_price)
 
-end_date = datetime.now().strftime("%Y-%m-%d")
+#end_date = datetime.now().strftime("%Y-%m-%d")
 
-print(end_date)
+#print(end_date)
 #Interval required 5 minutes
-data = yf.download(tickers='AAPL', start='2023-04-29', end='2023-05-07' , interval='1h')
+#data = yf.download(tickers='AAPL', start='2023-04-29', end='2023-05-07' , interval='1h')
 #Print data
-print(data)
+#print(data)
 
 
 #stock_fundament = stock.ticker_fundament()

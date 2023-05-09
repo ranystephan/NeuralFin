@@ -150,8 +150,12 @@ class PortfolioMetricsView(APIView):
             "portfolio_value": portfolio_value,
             "portfolio_value_at_purchase": self.calculate_portfolio_value_at_purchase(portfolio_items),
             "pnl": self.calculate_pnl(portfolio_items, stock_data),
+            "portfolio_performance": self.calculate_portfolio_performance(portfolio_items, stock_data),
             "beta": self.calculate_beta(portfolio_items, stock_data, start_date, end_date),
-            # Add other metrics here
+            "diversification": self.calculate_diversification(portfolio_items, stock_data),
+            "value_at_risk": self.calculate_value_at_risk(portfolio_items, stock_data),
+            "expected_shortfall": self.calculate_expected_shortfall(portfolio_items, stock_data),
+            "sector_allocation": self.calculate_sector_allocation(portfolio_items),
         }
 
         return Response(metrics)
@@ -159,11 +163,19 @@ class PortfolioMetricsView(APIView):
     def calculate_pnl(self, portfolio_items, stock_data):
         pnl = 0
         for item in portfolio_items:
-            stock = item.stock
-            current_price = stock_data[stock.symbol]["Close"].iloc[-1]
-            profit = (current_price - float(item.purchase_price)) * item.shares
+            stock = yf.Ticker(item.stock.symbol)
+            current_price = stock.fast_info['lastPrice']
+            profit = (current_price - stock.fast_info['previousClose']) * item.shares
             pnl += profit
         return pnl
+    
+    def calculate_portfolio_performance(self, portfolio_items, stock_data):
+        portfolio_value = self.calculate_portfolio_value(portfolio_items, stock_data)
+        portfolio_value_at_purchase = self.calculate_portfolio_value_at_purchase(portfolio_items)
+        percentagePerf = (portfolio_value - portfolio_value_at_purchase) / portfolio_value_at_purchase
+        valuePerf = portfolio_value - portfolio_value_at_purchase
+        
+        return percentagePerf, valuePerf
 
     def calculate_beta(self, portfolio_items, stock_data, start_date, end_date):
         market_index_symbol = "^GSPC"  # S&P 500
@@ -189,9 +201,10 @@ class PortfolioMetricsView(APIView):
 
     def calculate_portfolio_value(self, portfolio_items, stock_data):
         portfolio_value = 0
+        
         for item in portfolio_items:
-            stock = item.stock
-            current_price = stock_data[stock.symbol]["Close"].iloc[-1]
+            stock = yf.Ticker(item.stock.symbol)
+            current_price = stock.fast_info['lastPrice']
             value = current_price * item.shares
             portfolio_value += value
         return portfolio_value
@@ -202,6 +215,67 @@ class PortfolioMetricsView(APIView):
             value_at_purchase = item.shares * float(item.purchase_price)
             portfolio_value_at_purchase += value_at_purchase
         return portfolio_value_at_purchase
+
+
+    def calculate_portfolio_returns(self, portfolio_items, stock_data):
+        weighted_returns = []
+        
+        for item in portfolio_items:
+            stock = item.stock
+            stock_returns = stock_data[stock.symbol]['Close'].pct_change().dropna()
+            weight = (item.shares * float(item.purchase_price)) / self.calculate_portfolio_value(portfolio_items, stock_data)
+            weighted_returns.append(stock_returns * weight)
+
+        portfolio_returns = pd.concat(weighted_returns, axis=1).sum(axis=1)
+        
+        return portfolio_returns
+    
+    def calculate_diversification(self, portfolio_items, stock_data):
+        stock_returns = []
+        symbols = []
+
+        for item in portfolio_items:
+            stock = item.stock
+            symbols.append(stock.symbol)
+            stock_returns.append(stock_data[stock.symbol]['Close'].pct_change().dropna())
+
+        returns_matrix = pd.concat(stock_returns, axis=1)
+        returns_matrix.columns = symbols
+
+        correlation_matrix = returns_matrix.corr()
+        
+        return correlation_matrix
+
+    def calculate_value_at_risk(self, portfolio_items, stock_data, confidence_level=0.95):
+        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
+        value_at_risk = -np.percentile(portfolio_returns, 100 * (1 - confidence_level))
+        
+        return value_at_risk
+
+    def calculate_expected_shortfall(self, portfolio_items, stock_data, confidence_level=0.95):
+        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
+        value_at_risk = self.calculate_value_at_risk(portfolio_items, stock_data, confidence_level)
+        expected_shortfall = -np.mean(portfolio_returns[portfolio_returns < -value_at_risk])
+        
+        return expected_shortfall
+
+    def calculate_sector_allocation(self, portfolio_items):
+        sector_allocation = {}
+        
+        for item in portfolio_items:
+            stock = item.stock
+            sector = stock.sector
+            value = item.shares * float(item.purchase_price)
+            
+            if sector in sector_allocation:
+                sector_allocation[sector] += value
+            else:
+                sector_allocation[sector] = value
+
+        total_value = sum(sector_allocation.values())
+        sector_allocation = {k: v / total_value for k, v in sector_allocation.items()}
+        
+        return sector_allocation
 
 
 
