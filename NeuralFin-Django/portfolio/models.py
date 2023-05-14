@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from users.models import User
 from stocks.models import Stock
@@ -37,15 +38,25 @@ class PortfolioItem(models.Model):
         default=TransactionType.BUY,
     )
 
-    def get_stock_market_price(stock_symbol):
+    def get_stock_market_price_and_date(stock_symbol):
         stock = yf.Ticker(stock_symbol)
+        market_data = stock.history(period='1m', interval='1m')
+        
+        first_valid_index = market_data.first_valid_index()
+        
         market_price = stock.fast_info['lastPrice']
-        return market_price
+        market_date = first_valid_index
+        
+        return market_price, market_date
 
     def save(self, *args, **kwargs):
         self.stock_symbol = self.stock.symbol
-        if self.purchase_price is None:
-            self.purchase_price = self.get_stock_market_price(self.stock.symbol)
+        if self.purchase_price is None or self.transaction_date is None:
+            market_price, market_date = PortfolioItem.get_stock_market_price_and_date(self.stock.symbol)
+            if self.purchase_price is None:
+                self.purchase_price = market_price
+            if self.transaction_date is None:
+                self.transaction_date = timezone.make_aware(datetime.datetime.fromtimestamp(market_date))
         super().save(*args, **kwargs)
         
     def __str__(self):

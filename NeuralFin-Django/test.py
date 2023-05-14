@@ -2,14 +2,28 @@ from finvizfinance.quote import finvizfinance
 import yfinance as yf
 from datetime import datetime
 
-stock = finvizfinance('AAPL')
+#stock = finvizfinance('AAPL')
 
-stockYF = yf.Ticker('AAPL')
+#print(stock.ticker_fundament())
 
-market_price = stockYF.fast_info['lastPrice']
+stockYF = yf.Ticker('ABBV')
 
-fast = stockYF.fast_info['previousClose']
-print(fast)
+market_price = stockYF.history(period='1m', interval='1m')
+
+last_price = stockYF.fast_info['lastPrice']
+
+
+market_data = stockYF.history(period='1m', interval='1m')
+
+first_valid_index = market_data.first_valid_index()
+
+#fast = stockYF.fast_info['previousClose']
+print(market_price)
+print(last_price)
+
+print("AAAAAAAAAAAAAAAAA")
+
+print(first_valid_index)
 
 #print(market_price)
 
