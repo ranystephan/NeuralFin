@@ -4,7 +4,7 @@ from datetime import datetime
 
 #stock = finvizfinance('^TNX')
 
-stock = yf.Ticker('^TNX')
+stock = yf.Ticker('^GSPC')
 print(stock.fast_info['lastPrice'])
 #print(stock.ticker_fundament())
 

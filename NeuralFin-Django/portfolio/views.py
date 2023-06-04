@@ -145,7 +145,12 @@ class PortfolioMetricsView(APIView):
 
         # Calculate metrics
         portfolio_value = self.calculate_portfolio_value(portfolio_items, stock_data)
+        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
+        benchmark_data = yf.download("^GSPC", start=start_date, end=end_date)
+        benchmark_returns = benchmark_data["Close"].pct_change().dropna()
 
+
+        
         metrics = {
             "portfolio_value": portfolio_value,
             "portfolio_value_at_purchase": self.calculate_portfolio_value_at_purchase(portfolio_items),
@@ -158,10 +163,10 @@ class PortfolioMetricsView(APIView):
             "sector_allocation": self.calculate_sector_allocation(portfolio_items),
             "sharpe_ratio": self.calculate_sharpe_ratio(portfolio_items, stock_data),
             "sortino_ratio": self.calculate_sortino_ratio(portfolio_items, stock_data),
-            "information_ratio": self.calculate_information_ratio(portfolio_items, stock_data),
-            "alpha": self.calculate_alpha(portfolio_items, stock_data),
-            "information_coefficient": self.calculate_information_coefficient(portfolio_items, stock_data),
-            "jensen_alpha": self.calculate_jensen_alpha(portfolio_items, stock_data),
+            "information_ratio": self.calculate_information_ratio(portfolio_returns, benchmark_returns),
+            "alpha": self.calculate_alpha(portfolio_returns, benchmark_returns),
+            "information_coefficient": self.calculate_information_coefficient(portfolio_returns, benchmark_returns),
+            "jensen_alpha": self.calculate_jensen_alpha(portfolio_returns, benchmark_returns),
         }
 
         return Response(metrics)
@@ -299,30 +304,22 @@ class PortfolioMetricsView(APIView):
         
         return sortino_ratio
     
-    def calculate_information_ratio(self, portfolio_items, stock_data):
-        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
-        benchmark_returns = stock_data["^GSPC"]["Close"].pct_change().dropna()
+    def calculate_information_ratio(self, portfolio_returns, benchmark_returns):
         information_ratio = (portfolio_returns - benchmark_returns).mean() / (portfolio_returns - benchmark_returns).std()
         
         return information_ratio
     
-    def calculate_alpha(self, portfolio_items, stock_data):
-        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
-        benchmark_returns = stock_data["^GSPC"]["Close"].pct_change().dropna()
+    def calculate_alpha(self, portfolio_returns, benchmark_returns):
         alpha = portfolio_returns.mean() - benchmark_returns.mean()
         
         return alpha
     
-    def calculate_information_coefficient(self, portfolio_items, stock_data):
-        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
-        benchmark_returns = stock_data["^GSPC"]["Close"].pct_change().dropna()
+    def calculate_information_coefficient(self, portfolio_returns, benchmark_returns):
         information_coefficient = np.corrcoef(portfolio_returns, benchmark_returns)[0][1]
         
         return information_coefficient
     
-    def calculate_jensen_alpha(self, portfolio_items, stock_data):
-        portfolio_returns = self.calculate_portfolio_returns(portfolio_items, stock_data)
-        benchmark_returns = stock_data["^GSPC"]["Close"].pct_change().dropna()
+    def calculate_jensen_alpha(self, portfolio_returns, benchmark_returns):
         beta, alpha = np.polyfit(benchmark_returns, portfolio_returns, deg=1)
         jensen_alpha = alpha - beta * benchmark_returns.mean()
         
