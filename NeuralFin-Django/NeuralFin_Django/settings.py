@@ -210,8 +210,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = 'users.User' 
+
+
+CORS_ORIGIN_ALLOW_ALL = True #newly added
 CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
 
+
+
+
+""" 
 SESSION_COOKIE_DOMAIN = 'neuralfin.xyz'
 CSRF_COOKIE_DOMAIN = 'neuralfin.xyz'
 
@@ -246,4 +253,4 @@ CORS_ALLOW_HEADERS = [
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
     "https://neuralfin.xyz",
-]
+] """

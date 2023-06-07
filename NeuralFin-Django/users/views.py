@@ -3,31 +3,16 @@ from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from .serializers import UserSerializer
 from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken
-
-import random
-import string
-
-def generate_unique_username(name):
-    username = name.replace(" ", "")
-    while User.objects.filter(username=username).exists():
-        random_number = ''.join(random.choices(string.digits, k=4))
-        username = f"{name}{random_number}"
-    return username
+import jwt, datetime
 
 
-
+# Create your views here.
 class RegisterView(APIView):
     def post(self, request):
-        data = request.data.copy()
-        data['username'] = generate_unique_username(data['name'])
-        serializer = UserSerializer(data=data)
+        serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
 
 
 class LoginView(APIView):
@@ -43,13 +28,19 @@ class LoginView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password!')
 
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
+        payload = {
+            'id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat': datetime.datetime.utcnow()
+        }
+
+        token = jwt.encode(payload, 'secret', algorithms='HS256').decode('utf-8')
 
         response = Response()
-        response.set_cookie(key='jwt', value=access_token, httponly=True, samesite='None', secure=True, domain='neuralfin.xyz') #, httponly=True, samesite='None', secure=True
+
+        response.set_cookie(key='jwt', value=token, httponly=True)
         response.data = {
-            'jwt': access_token
+            'jwt': token
         }
         return response
 
@@ -63,43 +54,20 @@ class UserView(APIView):
             raise AuthenticationFailed('Unauthenticated!')
 
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
 
+        user = User.objects.filter(id=payload['id']).first()
         serializer = UserSerializer(user)
         return Response(serializer.data)
-    
-    def put(self, request):
-        token = request.COOKIES.get('jwt')
-        
-        if not token:
-            raise AuthenticationFailed('Unauthenticated!')
-        
-        try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            request.user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
-            raise AuthenticationFailed('Unauthenticated!')
-        
-        data = request.data.copy()
-        data['username'] = generate_unique_username(data['username'])
-        serializer = UserSerializer(instance=request.user, data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-    
+
 
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
-        response.delete_cookie('jwt', samesite='None')
+        response.delete_cookie('jwt')
         response.data = {
             'message': 'success'
         }
         return response
-
-
