@@ -47,7 +47,7 @@ class LoginView(APIView):
         access_token = str(refresh.access_token)
 
         response = Response()
-        response.set_cookie(key='jwt', value=access_token, httponly=True, samesite='None', secure=True) #, httponly=True, samesite='None', secure=True
+        response.set_cookie(key='jwt', value=access_token, httponly=True, samesite='Lax', secure=True) #, httponly=True, samesite='None', secure=True
         response.data = {
             'jwt': access_token
         }
@@ -96,7 +96,7 @@ class UserView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
-        response.delete_cookie('jwt', samesite='None')
+        response.delete_cookie('jwt', samesite='Lax')
         response.data = {
             'message': 'success'
         }
