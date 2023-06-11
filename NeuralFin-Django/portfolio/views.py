@@ -1,12 +1,13 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken
+
 from .models import Portfolio, PortfolioItem
 from .serializers import PortfolioSerializer, PortfolioItemSerializer
 
+import jwt
 
+from users.models import User
+from users.serializers import UserSerializer
 
 
 class PortfolioListCreateView(generics.ListCreateAPIView):
@@ -20,11 +21,11 @@ class PortfolioListCreateView(generics.ListCreateAPIView):
             raise AuthenticationFailed('Unauthenticated!')
 
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
 
         serializer.save(user=user)
 
@@ -40,11 +41,11 @@ class PortfolioRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             raise AuthenticationFailed('Unauthenticated!')
 
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
 
         return self.queryset.filter(user=user)
 
@@ -58,11 +59,11 @@ class PortfolioItemListCreateView(generics.ListCreateAPIView):
             raise AuthenticationFailed('Unauthenticated!')
 
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
 
         return PortfolioItem.objects.filter(portfolio__user=user)
 
@@ -73,11 +74,11 @@ class PortfolioItemListCreateView(generics.ListCreateAPIView):
             raise AuthenticationFailed('Unauthenticated!')
 
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
 
 
         portfolio = Portfolio.objects.get(user=user)
@@ -95,11 +96,11 @@ class PortfolioItemRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
             raise AuthenticationFailed('Unauthenticated!')
 
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
 
         return self.queryset.filter(portfolio__user=user)
 
@@ -120,17 +121,17 @@ from rest_framework.response import Response
 class PortfolioMetricsView(APIView):
 
     def get(self, request):
-        token = request.COOKIES.get('jwt')
-        
+        token = self.request.COOKIES.get('jwt')
+
         if not token:
             raise AuthenticationFailed('Unauthenticated!')
-        
+
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
+
+        user = User.objects.filter(id=payload['id']).first()
         
         portfolio_items = PortfolioItem.objects.filter(portfolio__user=user)
         start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
@@ -329,60 +330,63 @@ class PortfolioMetricsView(APIView):
 
 
 
+
+from itertools import groupby
+
+
 from django.utils import timezone
+
+
+
+from .models import PortfolioItem
 
 
 class PortfolioValueOverTimeView(APIView):
 
     def get(self, request):
-        token = request.COOKIES.get('jwt')
-        
+        token = self.request.COOKIES.get('jwt')
+
         if not token:
             raise AuthenticationFailed('Unauthenticated!')
-        
+
         try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except InvalidToken:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated!')
 
+        user = User.objects.filter(id=payload['id']).first()
+        
+        portfolio_items = PortfolioItem.objects.filter(portfolio__user=user).select_related('stock')
 
-        portfolio_items = PortfolioItem.objects.filter(portfolio__user=user)
-
-        # Determine the date of the first transaction and set the start_date 7 days earlier
         first_transaction_date = portfolio_items.order_by("transaction_date").first().transaction_date.date()
         start_date = (first_transaction_date - timedelta(days=7)).strftime("%Y-%m-%d")
         end_date = datetime.now().strftime("%Y-%m-%d")
 
-
-        # Fetch historical stock data with an hourly interval
         stock_data = {}
         for item in portfolio_items:
             stock = item.stock
             stock_info = yf.download(stock.symbol, start=start_date, end=end_date, interval="1h")
             stock_info = stock_info.fillna(method='ffill')  # Fill missing values with the most recent available price
             stock_data[stock.symbol] = stock_info
-        
+
         print("stock_data")
         print(stock_data)
-        # Calculate the portfolio value over time
         portfolio_value_over_time = self.calculate_portfolio_value_over_time(portfolio_items, stock_data, start_date, end_date)
 
         return Response(portfolio_value_over_time)
-
 
     def calculate_portfolio_value_over_time(self, portfolio_items, stock_data, start_date, end_date):
         date_range = pd.date_range(start=start_date, end=end_date, freq="H")
         portfolio_value_over_time = {}
 
         last_close_values = {stock_symbol: 0 for stock_symbol in stock_data}
+        grouped_portfolio_items = {k: list(v) for k, v in groupby(portfolio_items, key=lambda x: x.stock.symbol)}
 
         for date in date_range:
             date = timezone.make_aware(date)
             portfolio_value = 0
             for stock_symbol, stock_info in stock_data.items():
-                relevant_items = portfolio_items.filter(stock__symbol=stock_symbol, transaction_date__lte=date)
+                relevant_items = grouped_portfolio_items.get(stock_symbol, [])
                 if not stock_info.empty:
                     try:
                         current_price = stock_info.loc[stock_info.index <= date, "Close"].iloc[-1]
@@ -397,8 +401,3 @@ class PortfolioValueOverTimeView(APIView):
             portfolio_value_over_time[date.strftime("%Y-%m-%d %H:%M:%S")] = portfolio_value
 
         return portfolio_value_over_time
-
-
-
-
-
