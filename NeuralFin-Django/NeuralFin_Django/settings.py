@@ -69,11 +69,13 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    
+    'corsheaders.middleware.CorsMiddleware',
+
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 
@@ -165,32 +167,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User' 
 
 
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
-
-SESSION_COOKIE_DOMAIN = None
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False
-
-CSRF_COOKIE_DOMAIN = None
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = False
+CORS_ORIGIN_ALLOW_ALL = False
 
 
-CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
-
-SESSION_COOKIE_DOMAIN = 'neuralfin.xyz'
-CSRF_COOKIE_DOMAIN = 'neuralfin.xyz'
+CORS_ALLOW_CREDENTIALS = False # to allow cookies to be sent across domains
 
 
-SESSION_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SAMESITE = 'None'
-
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-
-
-CORS_ALLOWED_ORIGINS = [ƒ
+CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://neuralfin.xyz",
     "http://localhost:8000",
@@ -210,8 +193,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',
-    'https://neuralfin.xyz',
-    'http://localhost:8000',
-]
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
