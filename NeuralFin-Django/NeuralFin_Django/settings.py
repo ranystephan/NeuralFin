@@ -40,7 +40,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', 'neuralfin.xyz']
 
 
 # Application definition
@@ -166,13 +166,16 @@ AUTH_USER_MODEL = 'users.User'
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
-SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_DOMAIN = None
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
+
+CSRF_COOKIE_DOMAIN = None
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False
 
 
-""" CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
+CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
 
 SESSION_COOKIE_DOMAIN = 'neuralfin.xyz'
 CSRF_COOKIE_DOMAIN = 'neuralfin.xyz'
@@ -193,7 +196,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://neuralfin.xyz",
     "http://localhost:8000",
 ]
+
 CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -205,7 +210,4 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000",
-    "https://neuralfin.xyz",
-] """
+
