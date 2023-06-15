@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    
     'corsheaders',
     
     'stocks',
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -183,15 +185,12 @@ CSRF_COOKIE_DOMAIN = 'neuralfin.xyz'
 
 SESSION_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SAMESITE = 'None'
-#CSRF_COOKIE_SAMESITE = 'Lax'
 
 SESSION_COOKIE_SECURE = True
-#SESSION_COOKIE_SECURE = False
-
 CSRF_COOKIE_SECURE = True
 
 
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = [ƒ
     "http://localhost:3000",
     "https://neuralfin.xyz",
     "http://localhost:8000",
@@ -211,3 +210,8 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',
+    'https://neuralfin.xyz',
+    'http://localhost:8000',
+]
