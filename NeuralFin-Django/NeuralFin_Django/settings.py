@@ -169,6 +169,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://neuralfin.xyz",
+]
+
 """ CORS_ALLOW_CREDENTIALS = True # to allow cookies to be sent across domains
 
 SESSION_COOKIE_DOMAIN = 'neuralfin.xyz'
@@ -201,8 +207,4 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
-]
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000",
-    "https://neuralfin.xyz",
 ] """
